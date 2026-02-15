@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penguin Quest - Gothic Romance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1a0033 0%, #330066 50%, #2d004d 100%);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hud {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(20, 0, 40, 0.95);
+            border: 3px solid #FF1493;
+            padding: 25px;
+            border-radius: 2px;
+            font-family: 'Courier New', monospace;
+            color: #FFF;
+            font-size: 13px;
+            backdrop-filter: blur(15px);
+            pointer-events: auto;
+            box-shadow: 0 0 30px rgba(255, 20, 147, 0.6), inset 0 0 20px rgba(255, 20, 147, 0.1);
+            z-index: 100;
+            letter-spacing: 1px;
+        }
+
+        .hud-title {
+            color: #FF1493;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(255, 20, 147, 0.8);
+        }
+
+        .hud-item {
+            margin: 10px 0;
+            line-height: 1.8;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #E0B0FF;
+        }
+
+        .hud-label {
+            color: #FF1493;
+            font-weight: bold;
+            min-width: 100px;
+            text-shadow: 0 0 8px rgba(255, 20, 147, 0.6);
+        }
+
+        .hud-value {
+            color: #00FF88;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+        }
+
+        .score-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(20, 0, 40, 0.95);
+            border: 3px solid #FFD700;
+            padding: 20px 35px;
+            border-radius: 2px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #FFD700;
+            backdrop-filter: blur(15px);
+            pointer-events: auto;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.6), inset 0 0 20px rgba(255, 215, 0, 0.1);
+            z-index: 100;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .affection-meter {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: rgba(20, 0, 40, 0.95);
+            border: 3px solid #FF1493;
+            padding: 15px;
+            border-radius: 2px;
+            width: 250px;
+            pointer-events: auto;
+            box-shadow: 0 0 30px rgba(255, 20, 147, 0.6);
+            z-index: 100;
+        }
+
+        .affection-label {
+            color: #FF1493;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            text-shadow: 0 0 8px rgba(255, 20, 147, 0.6);
+        }
+
+        .affection-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 20, 147, 0.2);
+            border: 1px solid #FF1493;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .affection-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FF1493, #FF69B4);
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(255, 20, 147, 0.8);
+        }
+
+        .affection-text {
+            color: #E0B0FF;
+            font-size: 10px;
+            margin-top: 6px;
+            text-align: center;
+            min-height: 15px;
+        }
+
+        .controls-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(20, 0, 40, 0.95);
+            border: 3px solid #E0B0FF;
+            padding: 18px 24px;
+            border-radius: 2px;
+            font-family: 'Courier New', monospace;
+            color: #FFF;
+            font-size: 11px;
+            backdrop-filter: blur(15px);
+            pointer-events: auto;
+            box-shadow: 0 0 30px rgba(224, 176, 255, 0.4);
+            letter-spacing: 1px;
+        }
+
+        .control-item {
+            margin: 6px 0;
+            color: #E0B0FF;
+        }
+
+        .control-key {
+            color: #FFD700;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+        }
+
+        .affirmation-popup {
+            position: fixed;
+            font-size: 20px;
+            font-weight: bold;
+            color: #FF1493;
+            text-shadow: 0 0 15px rgba(255, 20, 147, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+            z-index: 50;
+            animation: popupFloat 3s ease-out forwards;
+            white-space: nowrap;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+
+        @keyframes popupFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-80px) scale(1.3);
+            }
+        }
+
+        .jojo-text {
+            position: fixed;
+            font-size: 48px;
+            font-weight: 900;
+            color: #FFD700;
+            text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000, 0 0 20px rgba(255, 215, 0, 0.8);
+            pointer-events: none;
+            z-index: 60;
+            animation: jojoShake 0.15s infinite;
+            font-family: 'Impact', sans-serif;
+            letter-spacing: 3px;
+        }
+
+        @keyframes jojoShake {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(-5px, -5px) scale(1.05); }
+            50% { transform: translate(5px, 5px) scale(1); }
+            75% { transform: translate(-5px, 5px) scale(1.05); }
+        }
+
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .end-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+        }
+
+        .end-screen.active {
+            display: flex;
+        }
+
+        .end-screen-content {
+            text-align: center;
+            color: #FFF;
+            animation: scaleIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            padding: 40px;
+            border: 4px solid #FF1493;
+            background: rgba(20, 0, 40, 0.9);
+            box-shadow: 0 0 50px rgba(255, 20, 147, 0.8);
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .end-screen h1 {
+            font-size: 56px;
+            color: #FF1493;
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px rgba(255, 20, 147, 0.8);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .end-screen p {
+            font-size: 22px;
+            color: #E0B0FF;
+            margin: 15px 0;
+            text-shadow: 0 0 15px rgba(224, 176, 255, 0.6);
+            font-family: 'Courier New', monospace;
+            line-height: 1.8;
+        }
+
+        .end-screen button {
+            margin-top: 35px;
+            padding: 18px 50px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #FF1493, #FF69B4);
+            color: #FFF;
+            border: 3px solid #FF1493;
+            border-radius: 2px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 0 30px rgba(255, 20, 147, 0.8);
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .end-screen button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 50px rgba(255, 20, 147, 1);
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .special-effect {
+            position: fixed;
+            pointer-events: none;
+            z-index: 55;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div class="ui-overlay">
+        <div class="hud">
+            <div class="hud-title">⚰️ PENGUIN QUEST ⚰️</div>
+            <div class="hud-item">
+                <span class="hud-label">❤️ VITALITY:</span>
+                <span class="hud-value" id="lives">3</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">📍 LEVEL:</span>
+                <span class="hud-value" id="level">1</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">⚔️ POWER:</span>
+                <span class="hud-value" id="power">0%</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">FPS:</span>
+                <span class="hud-value" id="fps">60</span>
+            </div>
+        </div>
+
+        <div class="score-counter">
+            💀 <span id="score">0</span> 💀
+        </div>
+
+        <div class="affection-meter">
+            <div class="affection-label">💋 Affection Level</div>
+            <div class="affection-bar">
+                <div class="affection-fill" id="affectionFill"></div>
+            </div>
+            <div class="affection-text" id="affectionText">Just beginning, sunshine... 😈</div>
+        </div>
+
+        <div class="controls-hint">
+            <div class="control-item"><span class="control-key">← →</span> or <span class="control-key">A/D</span> - Move, Darling</div>
+            <div class="control-item"><span class="control-key">SPACE</span> - Jump / Slide</div>
+            <div class="control-item"><span class="control-key">E</span> - Special Attack (MUDA!)</div>
+            <div class="control-item"><span class="control-key">J</span> - ORA ORA!</div>
+            <div class="control-item"><span class="control-key">S</span> - Summon Stand</div>
+            <div class="control-item"><span class="control-key">R</span> - Reset</div>
+            <div class="control-item"><span class="control-key">Click</span> - Spawn Love</div>
+        </div>
+    </div>
+
+    <div class="end-screen" id="endScreen">
+        <div class="end-screen-content">
+            <h1>💖 VICTORY, SUNSHINE! 💖</h1>
+            <p id="endMessage">You've conquered the Midnight Castle...</p>
+            <p id="finalScore">Score: 0 💀</p>
+            <p id="endAffirmation">I love you so much, sunshine! 😛💕</p>
+            <button onclick="location.reload()">Play Again, Darling</button>
+        </div>
+    </div>
+
+    <script>
+        // ============ AUDIO SYNTHESIS ============
+        class AudioEngine {
+            constructor() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                this.masterGain = this.audioContext.createGain();
+                this.masterGain.gain.value = 0.15;
+                this.masterGain.connect(this.audioContext.destination);
+                this.isPlaying = false;
+            }
+
+            playRockMusic() {
+                if (this.isPlaying) return;
+                this.isPlaying = true;
+
+                const now = this.audioContext.currentTime;
+                const tempo = 120;
+                const beatDuration = 60 / tempo;
+
+                // Bass line (dark rock)
+                const bassPattern = [55, 55, 73.42, 73.42, 55, 55, 82.41, 82.41];
+                const bassGain = this.audioContext.createGain();
+                bassGain.gain.value = 0.3;
+                bassGain.connect(this.masterGain);
+
+                bassPattern.forEach((freq, idx) => {
+                    const time = now + idx * beatDuration * 0.5;
+                    this.playNote(freq, time, beatDuration * 0.4, 'sine', bassGain, 0.4);
+                });
+
+                // Lead melody (phrasing rhythm)
+                const leadPattern = [164.81, 164.81, 196, 196, 164.81, 146.83, 130.81, 146.83];
+                const leadGain = this.audioContext.createGain();
+                leadGain.gain.value = 0.25;
+                leadGain.connect(this.masterGain);
+
+                leadPattern.forEach((freq, idx) => {
+                    const time = now + idx * beatDuration * 0.5 + beatDuration * 4;
+                    this.playNote(freq, time, beatDuration * 0.35, 'square', leadGain, 0.3);
+                });
+
+                // Loop
+                setTimeout(() => this.playRockMusic(), beatDuration * 16 * 1000);
+            }
+
+            playNote(frequency, startTime, duration, waveform = 'sine', outputNode = null, volume = 1) {
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                
+                osc.type = waveform;
+                osc.frequency.value = frequency;
+                
+                gain.gain.setValueAtTime(volume, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(outputNode || this.masterGain);
+                
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            }
+
+            playCollectSound() {
+                const now = this.audioContext.currentTime;
+                this.playNote(523.25, now, 0.1);
+                this.playNote(659.25, now + 0.1, 0.1);
+                this.playNote(783.99, now + 0.2, 0.15);
+            }
+
+            playJojoSound() {
+                const now = this.audioContext.currentTime;
+                for (let i = 0; i < 4; i++) {
+                    this.playNote(880, now + i * 0.08, 0.08, 'square');
+                }
+            }
+
+            playSpecialSound() {
+                const now = this.audioContext.currentTime;
+                this.playNote(440, now, 0.05, 'sine');
+                this.playNote(660, now + 0.05, 0.05, 'sine');
+                this.playNote(880, now + 0.1, 0.1, 'sine');
+            }
+        }
+
+        // ============ MATH UTILITIES ============
+        class Vector2 {
+            constructor(x = 0, y = 0) {
+                this.x = x;
+                this.y = y;
+            }
+
+            add(v) {
+                return new Vector2(this.x + v.x, this.y + v.y);
+            }
+
+            subtract(v) {
+                return new Vector2(this.x - v.x, this.y - v.y);
+            }
+
+            multiply(scalar) {
+                return new Vector2(this.x * scalar, this.y * scalar);
+            }
+
+            magnitude() {
+                return Math.sqrt(this.x * this.x + this.y * this.y);
+            }
+
+            distance(v) {
+                return this.subtract(v).magnitude();
+            }
+
+            normalize() {
+                const mag = this.magnitude();
+                return mag === 0 ? new Vector2(0, 0) : new Vector2(this.x / mag, this.y / mag);
+            }
+        }
+
+        // ============ PARTICLE SYSTEM ============
+        class Particle {
+            constructor(x, y, vx, vy, color, lifetime = 1) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.color = color;
+                this.lifetime = lifetime;
+                this.age = 0;
+                this.size = Math.random() * 5 + 2;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 10;
+            }
+
+            update(dt) {
+                this.age += dt;
+                this.vy += 300 * dt;
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+                this.rotation += this.rotationSpeed * dt;
+            }
+
+            draw(ctx) {
+                const alpha = Math.max(0, 1 - (this.age / this.lifetime));
+                ctx.globalAlpha = alpha;
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                ctx.globalAlpha = 1;
+            }
+
+            isAlive() {
+                return this.age < this.lifetime;
+            }
+        }
+
+        // ============ PENGUIN PLAYER ============
+        class Penguin {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 32;
+                this.height = 44;
+                this.vx = 0;
+                this.vy = 0;
+                this.isJumping = false;
+                this.isSliding = false;
+                this.slideTime = 0;
+                this.facing = 1;
+                this.animationFrame = 0;
+                this.animationTimer = 0;
+                this.specialEnergy = 0;
+                this.maxSpecialEnergy = 100;
+                this.heartBeat = 0;
+            }
+
+            update(dt, input, platforms) {
+                const groundLevel = 400;
+                
+                if (input.left) {
+                    this.vx = -220;
+                    this.facing = -1;
+                } else if (input.right) {
+                    this.vx = 220;
+                    this.facing = 1;
+                } else {
+                    this.vx *= 0.82;
+                }
+
+                if (input.jump && !this.isJumping && !this.isSliding) {
+                    this.vy = -420;
+                    this.isJumping = true;
+                }
+
+                if (input.special && !this.isSliding && !this.isJumping) {
+                    this.isSliding = true;
+                    this.slideTime = 0.6;
+                }
+
+                if (this.isSliding) {
+                    this.slideTime -= dt;
+                    this.vx = this.facing * 350;
+                    if (this.slideTime <= 0) {
+                        this.isSliding = false;
+                    }
+                } else {
+                    this.vx = Math.max(-270, Math.min(270, this.vx));
+                }
+
+                this.vy += 850 * dt;
+                this.vy = Math.min(this.vy, 550);
+
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+
+                if (this.y + this.height >= groundLevel) {
+                    this.y = groundLevel - this.height;
+                    this.vy = 0;
+                    this.isJumping = false;
+                }
+
+                if (this.x < 0) this.x = 0;
+                if (this.x + this.width > 800) this.x = 800 - this.width;
+
+                this.specialEnergy = Math.min(this.maxSpecialEnergy, this.specialEnergy + dt * 25);
+
+                this.animationTimer += dt;
+                if (this.animationTimer > 0.08) {
+                    this.animationFrame = (this.animationFrame + 1) % 6;
+                    this.animationTimer = 0;
+                }
+
+                this.heartBeat += dt * 2;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x + this.width / 2, this.y);
+
+                if (this.facing === -1) {
+                    ctx.scale(-1, 1);
+                }
+
+                const heartGlow = Math.sin(this.heartBeat) * 0.3 + 0.7;
+
+                // Body (black with goth sheen)
+                ctx.fillStyle = '#0a0a0a';
+                ctx.beginPath();
+                ctx.ellipse(0, 12, 13, 19, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Gothic chest plate effect
+                ctx.strokeStyle = '#FF1493';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.ellipse(0, 14, 6, 10, 0, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Belly (dark with heart symbol)
+                ctx.fillStyle = '#1a1a2e';
+                ctx.beginPath();
+                ctx.ellipse(0, 13, 8, 13, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Heart on chest
+                ctx.fillStyle = `rgba(255, 20, 147, ${heartGlow})`;
+                ctx.globalAlpha = heartGlow;
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('💖', 0, 13);
+                ctx.globalAlpha = 1;
+
+                // Head (black)
+                ctx.fillStyle = '#0a0a0a';
+                ctx.beginPath();
+                ctx.arc(0, -4, 9, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eyes (glowing)
+                ctx.fillStyle = '#00FF88';
+                ctx.beginPath();
+                ctx.arc(-3, -5, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(3, -5, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eye glow
+                ctx.fillStyle = 'rgba(0, 255, 136, 0.5)';
+                ctx.beginPath();
+                ctx.arc(-3, -5, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(3, -5, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Pupils
+                ctx.fillStyle = '#000000';
+                const pupilOffset = Math.sin(this.animationTimer * 10) * 0.8;
+                ctx.beginPath();
+                ctx.arc(-3 + pupilOffset, -5, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(3 + pupilOffset, -5, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Beak (deep crimson)
+                ctx.fillStyle = '#8B0000';
+                ctx.beginPath();
+                ctx.moveTo(-2.5, -1);
+                ctx.lineTo(2.5, -1);
+                ctx.lineTo(0, 2.5);
+                ctx.closePath();
+                ctx.fill();
+
+                // Gothic wings
+                ctx.fillStyle = '#0a0a0a';
+                ctx.beginPath();
+                ctx.ellipse(-8, 10, 3.5, 9, -0.35, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(8, 10, 3.5, 9, 0.35, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Wing details
+                ctx.strokeStyle = '#FF1493';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.ellipse(-8, 10, 3.5, 9, -0.35, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Feet
+                ctx.fillStyle = '#8B0000';
+                if (!this.isJumping) {
+                    ctx.fillRect(-5, 28, 3, 5);
+                    ctx.fillRect(2, 28, 3, 5);
+                }
+
+                // Power aura
+                const energyPercent = this.specialEnergy / this.maxSpecialEnergy;
+                if (energyPercent > 0.5) {
+                    ctx.strokeStyle = `rgba(255, 215, 0, ${energyPercent})`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 22, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+
+            getBounds() {
+                return {
+                    x: this.x,
+                    y: this.y,
+                    width: this.width,
+                    height: this.height
+                };
+            }
+        }
+
+        // ============ COLLECTIBLES ============
+        class Collectible {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.radius = 13;
+                this.bobbing = Math.random() * Math.PI * 2;
+                this.rotation = 0;
+                this.collected = false;
+                this.originalY = y;
+            }
+
+            update(dt) {
+                this.bobbing += dt * 2.5;
+                this.rotation += dt * 3;
+                this.y = this.originalY + Math.sin(this.bobbing) * 25;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                // Glow
+                ctx.fillStyle = this.getGlowColor();
+                ctx.globalAlpha = 0.3;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+
+                switch(this.type) {
+                    case 'love':
+                        this.drawHeart(ctx);
+                        break;
+                    case 'kiss':
+                        this.drawLips(ctx);
+                        break;
+                    case 'tongue':
+                        this.drawTongue(ctx);
+                        break;
+                }
+
+                ctx.restore();
+            }
+
+            getGlowColor() {
+                switch(this.type) {
+                    case 'love': return '#FF1493';
+                    case 'kiss': return '#FF69B4';
+                    case 'tongue': return '#FFB6C1';
+                }
+                return '#FF1493';
+            }
+
+            drawHeart(ctx) {
+                ctx.fillStyle = '#FF1493';
+                ctx.globalAlpha = 0.95;
+                const scale = 1.3;
+                ctx.beginPath();
+                ctx.moveTo(0, -5 * scale);
+                ctx.bezierCurveTo(-6 * scale, -11 * scale, -9 * scale, -6 * scale, -9 * scale, -1 * scale);
+                ctx.bezierCurveTo(-9 * scale, 5 * scale, 0, 11 * scale, 0, 11 * scale);
+                ctx.bezierCurveTo(0, 11 * scale, 9 * scale, 5 * scale, 9 * scale, -1 * scale);
+                ctx.bezierCurveTo(9 * scale, -6 * scale, 6 * scale, -11 * scale, 0, -5 * scale);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+
+            drawLips(ctx) {
+                ctx.fillStyle = '#FF69B4';
+                // Top lip
+                ctx.beginPath();
+                ctx.arc(-3, -2, 2.5, 0, Math.PI, true);
+                ctx.fill();
+                // Bottom lip
+                ctx.beginPath();
+                ctx.arc(3, 2, 2.5, 0, Math.PI);
+                ctx.fill();
+                // Kiss mark
+                ctx.strokeStyle = '#FF1493';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            drawTongue(ctx) {
+                ctx.fillStyle = '#FF1493';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 6, 8, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Cheeky shine
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.beginPath();
+                ctx.arc(-2, -3, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            getBounds() {
+                return {
+                    x: this.x - this.radius,
+                    y: this.y - this.radius,
+                    width: this.radius * 2,
+                    height: this.radius * 2
+                };
+            }
+        }
+
+        // ============ SPECIAL EVENT ============
+        class SpecialEvent {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.age = 0;
+                this.duration = 1.5;
+                this.scale = 0;
+                this.shakeIntensity = 1;
+            }
+
+            update(dt) {
+                this.age += dt;
+                this.scale = Math.min(1.2, this.age * 1.5);
+                this.shakeIntensity = Math.max(0, 1 - (this.age / this.duration));
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, 1 - (this.age / this.duration));
+                ctx.translate(this.x, this.y);
+
+                const shake = (Math.random() - 0.5) * 10 * this.shakeIntensity;
+                ctx.translate(shake, shake);
+                ctx.scale(this.scale);
+
+                if (this.type === 'ora') {
+                    this.drawORA(ctx);
+                } else if (this.type === 'muda') {
+                    this.drawMUDA(ctx);
+                } else if (this.type === 'stand') {
+                    this.drawStand(ctx);
+                }
+
+                ctx.restore();
+            }
+
+            drawORA(ctx) {
+                ctx.font = 'bold 50px Impact';
+                ctx.fillStyle = '#FFD700';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 4;
+                ctx.strokeText('ORA ORA!', 0, 0);
+                ctx.fillText('ORA ORA!', 0, 0);
+
+                // Dramatic rays
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 3;
+                for (let i = 0; i < 8; i++) {
+                    const angle = (Math.PI * 2 / 8) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(Math.cos(angle) * 70, Math.sin(angle) * 70);
+                    ctx.stroke();
+                }
+            }
+
+            drawMUDA(ctx) {
+                ctx.font = 'bold 50px Impact';
+                ctx.fillStyle = '#FF1493';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 4;
+                ctx.strokeText('MUDA MUDA!', 0, 0);
+                ctx.fillText('MUDA MUDA!', 0, 0);
+
+                // Chaotic waves
+                ctx.strokeStyle = 'rgba(255, 20, 147, 0.6)';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 3; i++) {
+                    const offset = i * 20;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 40 + offset, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+
+            drawStand(ctx) {
+                ctx.font = 'bold 45px Impact';
+                ctx.fillStyle = '#E0B0FF';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.strokeStyle = '#8B008B';
+                ctx.lineWidth = 3;
+                ctx.strokeText('STAND!', 0, -15);
+                ctx.fillText('STAND!', 0, -15);
+
+                // Spirit aura
+                ctx.strokeStyle = 'rgba(224, 176, 255, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(0, 0, 60, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Floating kanji
+                ctx.font = '32px Arial';
+                ctx.fillStyle = '#FFD700';
+                ctx.fillText('紫', 0, 0);
+            }
+
+            isAlive() {
+                return this.age < this.duration;
+            }
+        }
+
+        // ============ GAME MANAGER ============
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.width = 800;
+                this.height = 600;
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+
+                this.audioEngine = new AudioEngine();
+                this.audioEngine.playRockMusic();
+
+                this.penguin = new Penguin(100, 300);
+                this.collectibles = [];
+                this.particles = [];
+                this.specialEvents = [];
+                this.score = 0;
+                this.affection = 0;
+                this.maxAffection = 100;
+                this.lives = 3;
+                this.level = 1;
+                this.levelProgress = 0;
+                this.levelTarget = 12;
+                this.gameOver = false;
+
+                this.input = {
+                    left: false,
+                    right: false,
+                    up: false,
+                    jump: false,
+                    special: false
+                };
+
+                this.frameCount = 0;
+                this.lastFrameTime = Date.now();
+                this.fps = 0;
+
+                this.setupLevel();
+                this.setupInputHandlers();
+                this.spawnCollectibles();
+            }
+
+            setupLevel() {
+                this.collectibles = [];
+                this.particles = [];
+                this.specialEvents = [];
+            }
+
+            setupInputHandlers() {
+                document.addEventListener('keydown', (e) => {
+                    switch(e.key.toLowerCase()) {
+                        case 'arrowleft':
+                        case 'a':
+                            this.input.left = true;
+                            break;
+                        case 'arrowright':
+                        case 'd':
+                            this.input.right = true;
+                            break;
+                        case 'arrowup':
+                        case 'w':
+                            this.input.up = true;
+                            break;
+                        case ' ':
+                            this.input.jump = true;
+                            e.preventDefault();
+                            break;
+                        case 'e':
+                            this.input.special = true;
+                            this.triggerSpecialEvent('muda');
+                            break;
+                        case 'r':
+                            location.reload();
+                            break;
+                        case 'j':
+                            this.triggerSpecialEvent('ora');
+                            break;
+                        case 's':
+                            this.triggerSpecialEvent('stand');
+                            break;
+                    }
+                });
+
+                document.addEventListener('keyup', (e) => {
+                    switch(e.key.toLowerCase()) {
+                        case 'arrowleft':
+                        case 'a':
+                            this.input.left = false;
+                            break;
+                        case 'arrowright':
+                        case 'd':
+                            this.input.right = false;
+                            break;
+                        case 'arrowup':
+                        case 'w':
+                            this.input.up = false;
+                            break;
+                        case ' ':
+                            this.input.jump = false;
+                            break;
+                        case 'e':
+                            this.input.special = false;
+                            break;
+                    }
+                });
+
+                this.canvas.addEventListener('click', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    this.spawnCollectibleAt(x, y);
+                });
+            }
+
+            spawnCollectibles() {
+                const types = ['love', 'kiss', 'tongue'];
+                for (let i = 0; i < 10; i++) {
+                    const x = Math.random() * (this.width - 80) + 40;
+                    const y = Math.random() * (this.height - 200) + 50;
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    this.collectibles.push(new Collectible(x, y, type));
+                }
+            }
+
+            spawnCollectibleAt(x, y) {
+                const types = ['love', 'kiss', 'tongue'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                this.collectibles.push(new Collectible(x, y, type));
+            }
+
+            triggerSpecialEvent(type) {
+                if (type === 'muda' && this.penguin.specialEnergy < 80) {
+                    return;
+                }
+
+                if (type === 'muda') {
+                    this.penguin.specialEnergy = 0;
+                    this.audioEngine.playJojoSound();
+                } else {
+                    this.audioEngine.playSpecialSound();
+                }
+
+                const affirmations = {
+                    ora: [
+                        "ORA ORA ORA! 💪🐧",
+                        "Your strength is amazing, sunshine! 🔥",
+                        "So powerful! 😈💖",
+                        "I'm yours, sweetheart! 💋",
+                        "Unstoppable force! ⚡"
+                    ],
+                    muda: [
+                        "MUDAMUDA! You're the best! 😛💕",
+                        "I love watching you, sunshine! 👀💖",
+                        "Relentless passion! 🔥😋",
+                        "Take me, my love! 💋💋",
+                        "MUDA! So hot! 😈🔥"
+                    ],
+                    stand: [
+                        "Your Stand is glorious! 💜✨",
+                        "I feel your power, sunshine! 😈💖",
+                        "Mystical beauty! 🌙💋",
+                        "Your spirit enchants me! 🖤💜",
+                        "So seductive! 😛💕"
+                    ]
+                };
+
+                const msgs = affirmations[type] || [];
+                const msg = msgs[Math.floor(Math.random() * msgs.length)];
+
+                this.specialEvents.push(new SpecialEvent(this.penguin.x + 50, this.penguin.y - 100, type));
+                this.showAffirmation(msg, this.penguin.x + 50, this.penguin.y - 150);
+                this.createExplosion(this.penguin.x + 50, this.penguin.y, 30);
+            }
+
+            createExplosion(x, y, count) {
+                const colors = ['#FF1493', '#FF69B4', '#E0B0FF', '#FFD700', '#00FF88'];
+                for (let i = 0; i < count; i++) {
+                    const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5);
+                    const speed = 180 + Math.random() * 150;
+                    const vx = Math.cos(angle) * speed;
+                    const vy = Math.sin(angle) * speed;
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    this.particles.push(new Particle(x, y, vx, vy, color, 1.8));
+                }
+            }
+
+            showAffirmation(text, x, y) {
+                const popup = document.createElement('div');
+                popup.className = 'affirmation-popup';
+                popup.textContent = text;
+                popup.style.left = x + 'px';
+                popup.style.top = y + 'px';
+                document.body.appendChild(popup);
+                setTimeout(() => popup.remove(), 3000);
+            }
+
+            updateAffectionUI() {
+                const fillPercent = (this.affection / this.maxAffection) * 100;
+                document.getElementById('affectionFill').style.width = fillPercent + '%';
+                
+                const affectionMessages = [
+                    "Just beginning, sunshine... 😈",
+                    "You're catching my attention... 💋",
+                    "I'm falling for you, darling... 😛",
+                    "You're intoxicating me... 💖",
+                    "I'm obsessed with you! 🔥😈",
+                    "You own my heart, sunshine! 💕😍",
+                    "MINE. ALL MINE! 🖤💜"
+                ];
+
+                const messageIndex = Math.floor((this.affection / this.maxAffection) * (affectionMessages.length - 1));
+                document.getElementById('affectionText').textContent = affectionMessages[messageIndex];
+            }
+
+            checkCollisions() {
+                for (let i = this.collectibles.length - 1; i >= 0; i--) {
+                    const collectible = this.collectibles[i];
+                    const penguinBounds = this.penguin.getBounds();
+                    const collectibleBounds = collectible.getBounds();
+
+                    if (this.checkAABB(penguinBounds, collectibleBounds)) {
+                        this.collectibles.splice(i, 1);
+
+                        const pointsMap = { love: 15, kiss: 30, tongue: 50 };
+                        const points = pointsMap[collectible.type] || 15;
+                        this.score += points;
+                        this.affection = Math.min(this.maxAffection, this.affection + points);
+                        this.levelProgress++;
+
+                        this.audioEngine.playCollectSound();
+                        this.createExplosion(collectible.x, collectible.y, 18);
+
+                        const affirmations = [
+                            "You're so hot, sunshine! 😛🔥",
+                            "I love you so much! 💕💖",
+                            "Absolutely divine! ✨😈",
+                            "You make me weak, darling! 😍💋",
+                            "Mine forever! 🖤😘",
+                            "So perfect! 🌹💜",
+                            "Taste the love! 😛💕",
+                            "You're incredible! 🔥👑",
+                            "Absolutely stunning! 💎✨",
+                            "My beautiful sunshine! 🌟💖"
+                        ];
+                        const msg = affirmations[Math.floor(Math.random() * affirmations.length)];
+                        this.showAffirmation(msg, collectible.x, collectible.y - 30);
+
+                        if (this.levelProgress >= this.levelTarget) {
+                            this.completeLevel();
+                        }
+                    }
+                }
+            }
+
+            checkAABB(rect1, rect2) {
+                return rect1.x < rect2.x + rect2.width &&
+                       rect1.x + rect1.width > rect2.x &&
+                       rect1.y < rect2.y + rect2.height &&
+                       rect1.y + rect1.height > rect2.y;
+            }
+
+            completeLevel() {
+                const endScreen = document.getElementById('endScreen');
+                const endMessage = document.getElementById('endMessage');
+                const finalScore = document.getElementById('finalScore');
+                const endAffirmation = document.getElementById('endAffirmation');
+
+                const affirmations = [
+                    "You conquered my heart completely, sunshine! 💕😍",
+                    "I'm eternally yours, my love! 🖤💜",
+                    "You're the most seductive penguin ever! 😛🔥",
+                    "Forever yours, sweetheart! 💋💖",
+                    "My immortal beloved! 🌹💕",
+                    "You've made me yours, sunshine! 😈💖",
+                    "No one else will ever compare! 👑💕"
+                ];
+
+                const randomAffirmation = affirmations[Math.floor(Math.random() * affirmations.length)];
+                endMessage.textContent = "The Midnight Castle Falls! 🏰💀";
+                finalScore.textContent = `Affection: ${Math.floor(this.affection)} / ${this.maxAffection} 💖`;
+                endAffirmation.textContent = randomAffirmation;
+                endScreen.classList.add('active');
+                this.gameOver = true;
+            }
+
+            update(dt) {
+                if (this.gameOver) return;
+
+                this.penguin.update(dt, this.input, []);
+
+                for (let collectible of this.collectibles) {
+                    collectible.update(dt);
+                }
+
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    this.particles[i].update(dt);
+                    if (!this.particles[i].isAlive()) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+
+                for (let i = this.specialEvents.length - 1; i >= 0; i--) {
+                    this.specialEvents[i].update(dt);
+                    if (!this.specialEvents[i].isAlive()) {
+                        this.specialEvents.splice(i, 1);
+                    }
+                }
+
+                this.checkCollisions();
+                this.updateAffectionUI();
+
+                if (this.collectibles.length === 0 && !this.gameOver) {
+                    this.spawnCollectibles();
+                }
+            }
+
+            draw() {
+                // Dark gothic background
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
+                gradient.addColorStop(0, '#0a0520');
+                gradient.addColorStop(0.5, '#1a0a3a');
+                gradient.addColorStop(1, '#0a0520');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.width, this.height);
+
+                // Floating dark mist
+                this.ctx.fillStyle = 'rgba(128, 0, 128, 0.1)';
+                for (let i = 0; i < 15; i++) {
+                    const x = (Date.now() * 0.03 + i * 50) % this.width;
+                    const y = (Date.now() * 0.01 + i * 40) % (this.height * 0.5);
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y + 50, 30 + Math.sin(Date.now() * 0.001 + i) * 10, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+
+                // Ground - dark stone
+                this.ctx.fillStyle = '#0f0520';
+                this.ctx.fillRect(0, 400, this.width, 200);
+
+                // Stone tiles
+                this.ctx.strokeStyle = 'rgba(128, 0, 128, 0.3)';
+                this.ctx.lineWidth = 1;
+                for (let i = 0; i < 10; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        this.ctx.strokeRect(i * 80, 400 + j * 66, 80, 66);
+                    }
+                }
+
+                // Moon glow behind
+                this.ctx.fillStyle = 'rgba(224, 176, 255, 0.08)';
+                this.ctx.beginPath();
+                this.ctx.arc(this.width * 0.8, 80, 100, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Draw collectibles
+                for (let collectible of this.collectibles) {
+                    collectible.draw(this.ctx);
+                }
+
+                // Draw penguin
+                this.penguin.draw(this.ctx);
+
+                // Draw particles
+                for (let particle of this.particles) {
+                    particle.draw(this.ctx);
+                }
+
+                // Draw special events
+                for (let event of this.specialEvents) {
+                    event.draw(this.ctx);
+                }
+
+                // Update UI
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('lives').textContent = this.lives;
+                document.getElementById('level').textContent = this.level;
+                document.getElementById('power').textContent = Math.floor((this.penguin.specialEnergy / this.penguin.maxSpecialEnergy) * 100);
+                document.getElementById('fps').textContent = this.fps;
+            }
+
+            run() {
+                const gameLoop = () => {
+                    const now = Date.now();
+                    const dt = Math.min((now - this.lastFrameTime) / 1000, 0.016);
+                    this.lastFrameTime = now;
+
+                    this.frameCount++;
+                    if (this.frameCount % 30 === 0) {
+                        this.fps = Math.round(1 / dt);
+                    }
+
+                    this.update(dt);
+                    this.draw();
+
+                    requestAnimationFrame(gameLoop);
+                };
+
+                gameLoop();
+            }
+        }
+
+        // ============ START GAME ============
+        const game = new Game();
+        game.run();
+    </script>
+</body>
+</html>
